@@ -117,7 +117,7 @@ CI builds the MIPS binary and runs the self-test on every push.
 
 ## License
 
-- **`tfmtp`** (`src/`, the compiled binary): [MIT](LICENSE) © 2026 Pavel Kotek.
+- **`tfmtp`** (`src/`, the compiled binary, `build.sh`, `install/`, `tools/`): [MIT](LICENSE) © 2026 Pavel Kotek. See [NOTICE.md](NOTICE.md).
 - **`usb_mode.sh`**, both the patched and the original copy, is part of **TreeFrogUI** by Tomasz Zubertowski and contributors. It is redistributed with changes marked (`FIX (2026-11-08)`), under TreeFrogUI's license: **CC BY-NC-SA 4.0**, non-commercial use only.
 
 Not affiliated with the TreeFrogUI project.
