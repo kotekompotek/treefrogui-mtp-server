@@ -1,0 +1,7 @@
+# build outputs (the compiled tfmtp ships in the release zip)
+sdcard/cubegm/tfmtp
+tfmtp_test
+tfmtp_test.exe
+tfmtp_testroot/
+tools/out/
+*.zip

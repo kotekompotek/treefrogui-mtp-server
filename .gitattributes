@@ -1,0 +1,9 @@
+* text=auto
+*.sh text eol=lf
+*.c text eol=lf
+*.md text eol=lf
+*.patch text eol=lf
+patch/usb_mode.sh.orig-v1.8.0_u text eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+sdcard/cubegm/tfmtp binary

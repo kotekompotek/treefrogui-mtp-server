@@ -1,0 +1,38 @@
+name: build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.17.0
+
+      - name: Build tfmtp (MIPS) and run the protocol self-test
+        run: sh ./build.sh
+
+      - name: Check shell scripts keep LF line endings
+        run: |
+          for f in sdcard/cubegm/usb_mode.sh patch/usb_mode.sh.orig-v1.8.0_u patch/usb_mode.sh.patch build.sh; do
+            if grep -q $'\r' "$f"; then echo "CRLF in $f"; exit 1; fi
+          done
+
+      - name: Patch reproduces the shipped usb_mode.sh
+        run: |
+          tmp=$(mktemp -d); mkdir -p "$tmp/cubegm"
+          cp patch/usb_mode.sh.orig-v1.8.0_u "$tmp/cubegm/usb_mode.sh"
+          (cd "$tmp" && patch -p1 < "$GITHUB_WORKSPACE/patch/usb_mode.sh.patch")
+          cmp "$tmp/cubegm/usb_mode.sh" sdcard/cubegm/usb_mode.sh
+          sh -n sdcard/cubegm/usb_mode.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tfmtp-mipsel
+          path: sdcard/cubegm/tfmtp
