@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Pavel Kotek
 /*
  * tfmtp - lazy MTP responder for TreeFrogUI on HiChip HC16xx handhelds.
  *
