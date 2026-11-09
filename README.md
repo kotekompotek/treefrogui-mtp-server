@@ -55,7 +55,7 @@ Also verified: Cyrillic file names, exit with **B** (menu mode), mouse on the OT
 
 **You need:** a microSD card reader, and a USB cable that carries data (not a charge-only cable).
 
-1. Download **`treefrogui-mtp-server-v2.0.0.zip`** from [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest) and unzip it.
+1. Download **`treefrogui-mtp-server-v2.0.1.zip`** from [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest) and unzip it.
 2. Turn the console off and put its SD card into the PC.
 3. **Windows:** run one of
    - `install\install.bat` — MTP fix + background MTP (recommended);

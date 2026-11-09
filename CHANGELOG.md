@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.0.1 — 2026-11-10
+
+- **tfusbd**: the MTP server's per-request log went to `/tmp/tfmtp.log`, which is RAM on the console and grew without limit (about 1 MB in 20 minutes of browsing). It now goes to `/dev/null`, or to `log.txt` in the SD root when that file exists (the usual TreeFrogUI debug switch).
+
 ## v2.0.0 — 2026-11-10
 
 Background MTP and remote control. Write-up: [docs/BACKGROUND.md](docs/BACKGROUND.md).
