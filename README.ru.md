@@ -1,4 +1,4 @@
-# Исправление MTP (USB-передача файлов) для TreeFrogUI — tfmtp v2.0
+# Исправление MTP (USB-передача файлов) для TreeFrogUI — tfmtp v2.1
 
 **[English version →](README.md)** · **[Скачать релиз](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest)**
 
@@ -13,6 +13,7 @@
 > - **Порт OTG остаётся рабочим**: служба `tfusbd` сама переключает его между режимом хоста (мышка, геймпад, флешка) и режимом устройства (ПК).
 > - **Игры не тормозят**: MTP получает только тот процессор, который не нужен игре.
 > - **Удалённое управление с ПК** (включается отдельно): команды Linux от root, файлы, нажатия кнопок, снимки экрана, перезагрузка с автоматическим переподключением — `pc\r36.py`.
+> - **Запись игры (v2.1, включается вместе с удалённым управлением)**: видео и звук игр picoarch сразу в MP4 на ПК, в родном разрешении игры — `pc\r36rec.py`.
 >
 > Как это сделано, с замерами и тупиковыми ветками, — в [docs/BACKGROUND.ru.md](docs/BACKGROUND.ru.md).
 
@@ -43,10 +44,10 @@
 
 ## 2. Что в релизе
 
-Скачайте **`treefrogui-mtp-server-v2.0.1.zip`** из [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest). В нём собранные `tfmtp`, `tfusbd` и `tfkey`. В самом репозитории бинарников нет, их собирает `build.sh`.
+Скачайте **`treefrogui-mtp-server-v2.1.0.zip`** из [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest). В нём собранные `tfmtp`, `tfusbd` и `tfkey`. В самом репозитории бинарников нет, их собирает `build.sh`.
 
 ```
-treefrogui-mtp-server-v2.0.1/
+treefrogui-mtp-server-v2.1.0/
 ├── README.md / README.ru.md      ← описание (EN / RU)
 ├── LICENSE                       ← MIT для tfmtp, tfusbd, tfkey, pc/
 ├── SHA256SUMS.txt                ← контрольные суммы всех файлов
@@ -55,11 +56,13 @@ treefrogui-mtp-server-v2.0.1/
 │   ├── tfusbd                    ← служба фонового MTP и переключения порта OTG (90 КБ)
 │   ├── tfusbd.sh                 ← запуск / остановка / состояние службы
 │   ├── tfkey                     ← нажатие кнопок для удалённого управления
+│   ├── tfshim_gb350.so, tfshim.so← прослойка записи между picoarch и драйвером экрана/звука
+│   ├── tfrec                     ← запись: сжимает кадры и звук и отдаёт поток на ПК
 │   ├── usb_mode.sh               ← исправленный скрипт USB-режима TreeFrogUI v1.8.0_u
 │   └── usb_mtp.sh                ← пункт меню USB (MTP): при работающей службе сразу назад в меню
 ├── install/
 │   ├── install.bat               ← установка двойным щелчком (исправление MTP + фоновый MTP)
-│   ├── install_remote.bat        ← то же + удалённое управление с ПК
+│   ├── install_remote.bat        ← то же + удалённое управление с ПК и запись игры
 │   ├── uninstall.bat             ← полный откат двойным щелчком
 │   └── install_tfmtp.ps1         ← сам установщик (PowerShell, сообщения на языке Windows)
 ├── patch/
@@ -68,7 +71,8 @@ treefrogui-mtp-server-v2.0.1/
 │   ├── usb_mtp.sh.orig-v1.8.0_u  ← оригинальный usb_mtp.sh
 │   └── zhijack.hook              ← 2 строки автозапуска, которые вставляются в cubegm/zhijack.sh
 ├── src/                          ← исходники: tfmtp.c, tfusbd.c, tfkey.c
-├── pc/                           ← r36.py (управление с ПК), fbshot.py (снимок экрана)
+├── capture/                      ← запись: прослойка tfshim, tfrec, кодек, тесты
+├── pc/                           ← r36.py (управление), fbshot.py (снимок экрана), r36rec.py + tfcodec.dll (запись)
 ├── build.sh                      ← сборка + самопроверка (нужен Zig)
 ├── docs/                         ← TECHNICAL / BACKGROUND (EN, RU)
 └── tools/                        ← необязательные инструменты диагностики для Windows
@@ -91,7 +95,7 @@ treefrogui-mtp-server-v2.0.1/
 3. Скачайте zip из [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest), распакуйте в любую папку и запустите **`install\install.bat`** двойным щелчком.
    - Установщик сам найдёт карту TreeFrogUI (по файлу `cubegm\usb_mode.sh`).
    - Если вставлено несколько таких карт, запустите из командной строки: `install\install.bat -Target F:\`.
-   - Нужно ещё и удалённое управление с ПК — запустите **`install\install_remote.bat`** вместо `install.bat` (см. раздел 4.3 про безопасность).
+   - Нужно ещё и удалённое управление с ПК и запись игры — запустите **`install\install_remote.bat`** вместо `install.bat` (см. раздел 4.3 про безопасность).
    - Нужно только исправление MTP из v1.0, без фоновой службы: `install\install.bat -NoBackground`.
 4. Установщик:
    - проверяет, что это TreeFrogUI со встроенным MTP;
@@ -200,7 +204,10 @@ python pc\r36.py key press START  & rem кнопка: UP DOWN LEFT RIGHT A B X Y
 python pc\r36.py key seq "A 100, 500, B 100"  & rem последовательность: кнопка мс, пауза мс, ...
 python pc\r36.py shot screen.png  & rem снимок экрана
 python pc\r36.py reboot  & rem перезагрузка и ожидание, пока консоль вернётся
+python pc\r36rec.py game.mp4 --seconds 30  & rem запись видео и звука идущей игры
 ```
+
+**Запись игры** (`r36rec.py`) нужен ffmpeg на ПК: путь по умолчанию `C:\Program Files\ffmpeg-7.1-full_build\bin` или в `PATH`. Работает для игр через picoarch (libretro-ядра) на GB350. Параметры: `--fps 30`, `--scale 2` (половинный размер, меньше нагрузки в 3D-играх), `--av-offset МС`, `--raw файл.tfr` (сохранить исходный поток). Замер: Moonwalker (Mega Drive), 320×240 при 30 кадрах/с, потеряно 3 кадра из 398, звук без потерь, заминок не замечено. Как устроено — [BACKGROUND.ru.md, раздел 12](docs/BACKGROUND.ru.md).
 
 > ⚠️ **Безопасность.** С `cubegm\tfmtp.remote` любой ПК, к которому подключена консоль, получает права root на ней. Не включайте удалённое управление, если подключаете консоль к чужим компьютерам. Выключить: удалите `cubegm\tfmtp.remote`.
 
@@ -306,5 +313,5 @@ python pc\r36.py reboot  & rem перезагрузка и ожидание, п�
 
 - `sdcard/cubegm/usb_mode.sh` и `patch/usb_mode.sh.orig-v1.8.0_u` — файлы проекта **TreeFrogUI** (github.com/tzubertowski/TreeFrogUI). Исправленная версия — производная работа с пометкой изменений (`FIX (2026-11-08)`) и распространяется на условиях лицензии TreeFrogUI (см. `LICENSE.md` в релизе TreeFrogUI: CC BY-NC-SA 4.0 — **только некоммерческое использование**, с указанием авторства и на тех же условиях).
 - `sdcard/cubegm/usb_mtp.sh`, `patch/usb_mtp.sh.orig-v1.8.0_u` и строки, которые установщик вставляет в `zhijack.sh`, относятся к файлам TreeFrogUI и распространяются на тех же условиях.
-- `tfusbd`, `tfkey`, `tfusbd.sh`, `pc/` — лицензия [MIT](LICENSE), © 2026 Pavel Kotek.
+- `tfusbd`, `tfkey`, `tfusbd.sh`, `capture/` (tfshim, tfrec), `pc/` — лицензия [MIT](LICENSE), © 2026 Pavel Kotek.
 - `tfmtp` (`src/tfmtp.c`, `sdcard/cubegm/tfmtp`) — лицензия [MIT](LICENSE), © 2026 Pavel Kotek. Написан с нуля, без кода штатного `mtp-server`. Протокол MTP реализован по открытой спецификации USB-IF MTP 1.1. Интерфейс `/dev/mtp_usb` — стандартный интерфейс Android-драйвера `f_mtp` ядра Linux.

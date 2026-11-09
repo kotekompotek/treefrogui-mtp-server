@@ -15,7 +15,7 @@ jobs:
         with:
           version: 0.17.0
 
-      - name: Build tfmtp, tfusbd, tfkey (MIPS) and run the tfmtp protocol self-test
+      - name: Build everything (MIPS binaries, capture layer, tfcodec.dll) and run the tfmtp self-test
         run: sh ./build.sh
 
       - name: Check console binaries are static MIPS32 little-endian ELF
@@ -29,7 +29,7 @@ jobs:
       - name: Shell and Python syntax
         run: |
           sh -n sdcard/cubegm/tfusbd.sh && sh -n sdcard/cubegm/usb_mtp.sh && sh -n sdcard/cubegm/usb_mode.sh
-          python3 -m py_compile pc/r36.py pc/fbshot.py
+          python3 -m py_compile pc/r36.py pc/fbshot.py pc/r36rec.py capture/gen_tramp.py capture/postlink.py
 
       - name: Check shell scripts keep LF line endings
         run: |
@@ -52,3 +52,7 @@ jobs:
             sdcard/cubegm/tfmtp
             sdcard/cubegm/tfusbd
             sdcard/cubegm/tfkey
+            sdcard/cubegm/tfrec
+            sdcard/cubegm/tfshim.so
+            sdcard/cubegm/tfshim_gb350.so
+            pc/tfcodec.dll

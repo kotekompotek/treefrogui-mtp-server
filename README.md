@@ -17,6 +17,7 @@
 - **The OTG port keeps working.** The `tfusbd` service switches the port between host (mouse, pad, flash drive) and device (PC) by itself.
 - **Games stay smooth.** MTP only gets CPU time the game does not need (`SCHED_IDLE`).
 - **Remote control (optional, new in v2.0).** From the PC: Linux commands as root, files, button presses, screenshots, reboot with automatic reconnect — `pc\r36.py`.
+- **Gameplay recording (optional, new in v2.1).** Video and sound of picoarch games straight to an MP4 on the PC, at the game's native resolution — `pc\r36rec.py`.
 
 How it was done, with measurements and dead ends: **[docs/BACKGROUND.md](docs/BACKGROUND.md)** (v2.0) and **[docs/TECHNICAL.md](docs/TECHNICAL.md)** (the original MTP fix).
 
@@ -55,11 +56,11 @@ Also verified: Cyrillic file names, exit with **B** (menu mode), mouse on the OT
 
 **You need:** a microSD card reader, and a USB cable that carries data (not a charge-only cable).
 
-1. Download **`treefrogui-mtp-server-v2.0.1.zip`** from [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest) and unzip it.
+1. Download **`treefrogui-mtp-server-v2.1.0.zip`** from [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest) and unzip it.
 2. Turn the console off and put its SD card into the PC.
 3. **Windows:** run one of
    - `install\install.bat` — MTP fix + background MTP (recommended);
-   - `install\install_remote.bat` — the same plus remote control from the PC (read *Security* below);
+   - `install\install_remote.bat` — the same plus remote control from the PC and the recording layer (read *Security* below);
    - `install\install.bat -NoBackground` — only the v1.0 MTP fix, used from the USB (MTP) menu item.
 
    The installer finds the TreeFrogUI card, checks `cubegm/usb_mode.sh` and `usb_mtp.sh` against the stock v1.8.0_u by SHA-256, keeps backups (`*.orig`), copies `tfmtp`, `tfusbd`, `tfusbd.sh`, `tfkey`, adds two autostart lines to `cubegm/zhijack.sh` ([`patch/zhijack.hook`](patch/zhijack.hook)), creates `cubegm/tfusbd.on` and verifies the checksums.
@@ -96,7 +97,10 @@ python pc\r36.py key press START  & rem UP DOWN LEFT RIGHT A B X Y L1 R1 START S
 python pc\r36.py key seq "A 100, 500, B 100"  & rem button ms, pause ms, ...
 python pc\r36.py shot screen.png  & rem screenshot
 python pc\r36.py reboot  & rem reboot and wait until the console is back
+python pc\r36rec.py game.mp4 --seconds 30  & rem record video + sound of the running game
 ```
+
+Recording (`r36rec.py`, needs ffmpeg on the PC, default path `C:\Program Files\ffmpeg-7.1-full_build\bin` or on `PATH`) works for games that run through picoarch (libretro cores) on the GB350. Options: `--fps 30`, `--scale 2` (half size, less CPU on 3D games), `--av-offset MS`, `--raw file.tfr` (keep the raw stream). Measured: Moonwalker (Mega Drive) 320×240 at 30 fps, 3 of 398 frames lost, sound lossless, no stutter noticed. How it works: [BACKGROUND.md §12](docs/BACKGROUND.md#12-recording-video-and-sound-v21).
 
 > ⚠️ **Security.** With `cubegm/tfmtp.remote` present, **any PC the console is plugged into gets root on it.** Do not enable remote control if you plug the console into computers you do not trust. Delete the file to turn it off.
 
@@ -112,7 +116,7 @@ python pc\r36.py reboot  & rem reboot and wait until the console is back
 ## Build
 
 ```sh
-./build.sh                 # needs Zig >= 0.17 — builds sdcard/cubegm/{tfmtp,tfusbd,tfkey} and runs the tfmtp self-test
+./build.sh                 # needs Zig >= 0.17 and Python 3 — builds everything (incl. capture/) and runs the tfmtp self-test
 ```
 
 or manually:
@@ -133,16 +137,17 @@ The builds are reproducible. CI builds the MIPS binaries and runs the self-test 
 | `src/tfmtp.c` | the MTP server, with the optional remote-control operations |
 | `src/tfusbd.c` | background service: OTG host/device switching, PC detection, keeps `tfmtp` running |
 | `src/tfkey.c` | button injection through cubevol's `/tmp/joy_key` shared memory |
+| `capture/` | recording: driver layer `tfshim` (+ generated trampolines in `gen/`), `tfrec`, codec, offline tests |
 | `sdcard/cubegm/` | `tfusbd.sh` (start/stop/status), patched `usb_mode.sh` and `usb_mtp.sh` (v1.8.0_u base) |
 | `patch/` | original `usb_mode.sh` / `usb_mtp.sh` v1.8.0_u, unified diff, the `zhijack.sh` autostart lines |
 | `install/` | Windows installer / uninstaller |
-| `pc/` | `r36.py` remote control client, `fbshot.py` screenshots (Windows, Python 3 + comtypes) |
+| `pc/` | `r36.py` remote control client, `fbshot.py` screenshots, `r36rec.py` recorder + `tfcodec.dll` (Windows, Python 3 + comtypes) |
 | `tools/` | optional PC-side USB diagnostics (PowerShell) |
 | `docs/` | technical write-ups (EN / RU) |
 
 ## License
 
-- **`tfmtp`, `tfusbd`, `tfkey`, `tfusbd.sh`, `pc/`, `install/`, `tools/`, `build.sh`:** [MIT](LICENSE) © 2026 Pavel Kotek. See [NOTICE.md](NOTICE.md).
+- **`tfmtp`, `tfusbd`, `tfkey`, `tfusbd.sh`, `capture/` (tfshim, tfrec), `pc/`, `install/`, `tools/`, `build.sh`:** [MIT](LICENSE) © 2026 Pavel Kotek. See [NOTICE.md](NOTICE.md).
 - **`usb_mode.sh`, `usb_mtp.sh`** (patched and original copies) and the lines inserted into **`zhijack.sh`** belong to **TreeFrogUI** by Tomasz Zubertowski and contributors. They are redistributed with changes marked, under TreeFrogUI's license: **CC BY-NC-SA 4.0**, non-commercial use only.
 
 Not affiliated with the TreeFrogUI project. Upstream pull requests with these changes: [TreeFrogUI#104](https://github.com/tzubertowski/TreeFrogUI/pull/104) (MTP fix) and [TreeFrogUI#108](https://github.com/tzubertowski/TreeFrogUI/pull/108) (background service, remote control).

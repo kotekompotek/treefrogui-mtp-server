@@ -1,5 +1,15 @@
 # Changelog
 
+## v2.1.0 — 2026-11-10
+
+Gameplay recording. Write-up: [docs/BACKGROUND.md §12](docs/BACKGROUND.md#12-recording-video-and-sound-v21).
+
+- **tfshim** (new): a layer with the same exports as the console's display/sound driver (`driver_gb350.so`, 117 functions + 7 variables). It forwards everything through 8-instruction trampolines and copies frames (`video_driver_disp_frame`) and audio (`sound_driver_playframe`) into shared memory while a recording runs; otherwise each call costs 18 instructions. Enabled for picoarch by `PICOARCH_DRIVER` in the `zhijack.sh` autostart lines when `cubegm/tfshim.on` exists (GB350 only).
+- **tfrec** (new): lossless delta + RLE compression of frames, 48 kHz audio, streamed to the PC over the remote-control channel.
+- **pc/r36rec.py** (new) + `tfcodec.dll`: records an MP4 (H.264 + AAC) with ffmpeg, A/V-synced by timestamps.
+- **Installer**: `-Record` (included in `install_remote.bat`); updates the v2.0 autostart lines in place.
+- Measured: Moonwalker (Mega Drive), 320×240 at 30 fps, 3 of 398 frames lost, audio lossless, no stutter noticed.
+
 ## v2.0.1 — 2026-11-10
 
 - **tfusbd**: the MTP server's per-request log went to `/tmp/tfmtp.log`, which is RAM on the console and grew without limit (about 1 MB in 20 minutes of browsing). It now goes to `/dev/null`, or to `log.txt` in the SD root when that file exists (the usual TreeFrogUI debug switch).

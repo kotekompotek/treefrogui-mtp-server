@@ -8,3 +8,9 @@ tfmtp_test.exe
 tfmtp_testroot/
 tools/out/
 *.zip
+capture/build/
+sdcard/cubegm/tfrec
+sdcard/cubegm/tfshim.so
+sdcard/cubegm/tfshim_gb350.so
+pc/tfcodec.dll
+capture/tests/__pycache__/

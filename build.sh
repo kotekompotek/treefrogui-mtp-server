@@ -2,7 +2,7 @@
 # Build the console binaries and run the tfmtp protocol self-test on the host.
 # Needs Zig (https://ziglang.org); tested with Zig 0.17.0.
 #
-#   ./build.sh          -> sdcard/cubegm/{tfmtp,tfusbd,tfkey} (static MIPS32 LE) + self-test
+#   ./build.sh          -> sdcard/cubegm/{tfmtp,tfusbd,tfkey,tfrec,tfshim*.so}, pc/tfcodec.dll + self-test
 #   ZIG=/path/zig ./build.sh
 set -eu
 cd "$(dirname "$0")"
@@ -14,6 +14,11 @@ for b in tfmtp tfusbd tfkey; do
     "$ZIG" cc $MIPS -o "sdcard/cubegm/$b" "src/$b.c"
     ls -l "sdcard/cubegm/$b"
 done
+
+echo "== recording pipeline (capture/build.sh)"
+ZIG="$ZIG" sh capture/build.sh
+cp capture/build/tfshim_gb350.so capture/build/tfshim.so capture/build/tfrec sdcard/cubegm/
+cp capture/build/tfcodec.dll pc/
 
 echo "== host self-test (tfmtp protocol)"
 tmp=$(mktemp -d)

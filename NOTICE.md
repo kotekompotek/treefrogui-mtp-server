@@ -1,7 +1,9 @@
 # Licensing notice
 
 Scope: this MIT license covers tfmtp, tfusbd and tfkey (src/ and the compiled
-binaries), sdcard/cubegm/tfusbd.sh, pc/, build.sh, install/ and tools/.
+binaries), the recording pipeline (capture/, tfshim*.so, tfrec, tfcodec.dll),
+sdcard/cubegm/tfusbd.sh, pc/, build.sh, install/ and tools/. capture/gen/
+holds only symbol names read from the console's driver library; no vendor code.
 
 The following are part of TreeFrogUI (https://github.com/tzubertowski/TreeFrogUI)
 by Tomasz Zubertowski and contributors, licensed under CC BY-NC-SA 4.0

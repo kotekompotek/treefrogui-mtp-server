@@ -2,11 +2,12 @@
 #
 #   install_tfmtp.ps1                  - fix the built-in MTP mode + background MTP (tfusbd)
 #   install_tfmtp.ps1 -Remote          - also enable remote control from the PC (root shell over MTP)
+#   install_tfmtp.ps1 -Record          - also install the screen+sound recording layer (pc\r36rec.py, needs -Remote)
 #   install_tfmtp.ps1 -NoBackground    - only the MTP fix (v1.0 behaviour), no background service
 #   install_tfmtp.ps1 -Target F:\      - install to a given card (or a folder with a copy of the card)
 #   install_tfmtp.ps1 -Uninstall       - undo everything this package changed
 #   install_tfmtp.ps1 -Force           - also install over an unknown usb_mode.sh version (keeps a backup)
-param([string]$Target, [switch]$Uninstall, [switch]$Force, [switch]$NoBackground, [switch]$Remote)
+param([string]$Target, [switch]$Uninstall, [switch]$Force, [switch]$NoBackground, [switch]$Remote, [switch]$Record)
 $ErrorActionPreference = 'Stop'
 
 $RU = (Get-UICulture).Name -like 'ru*'
@@ -26,12 +27,15 @@ $srcMode  = Join-Path $srcCg 'usb_mode.sh'
 $srcMtp   = Join-Path $srcCg 'usb_mtp.sh'
 $hookText = (Read-Text (Join-Path $pkg 'patch\zhijack.hook')).Replace("`r`n", "`n")
 $bgFiles  = @('tfusbd', 'tfusbd.sh', 'tfkey')
+$recFiles = @('tfshim_gb350.so', 'tfshim.so', 'tfrec')
+# autostart lines written by v2.0.x (only tfusbd); replaced by the current ones on update
+$oldHooks = @((($hookText -split "`n")[0..3] -join "`n") + "`n")
 # SHA-256 of the original files shipped with TreeFrogUI v1.8.0_u
 $ORIG_MODE = @{ '20AB52FF0AAB3127D6F557FDCE04ADE92AEDE30B13AB00B845A6F8C5C940A0BA' = 'TreeFrogUI v1.8.0_u' }
 $ORIG_MTP  = @{ '28F0F74862F2D1C28DCAC58C76310A74BA11608B4A76ADFB40B3BEEDD382697E' = 'TreeFrogUI v1.8.0_u' }
 
 if (-not $Uninstall) {
-    foreach ($b in @('tfmtp') + $(if ($NoBackground) { @() } else { $bgFiles })) {
+    foreach ($b in @('tfmtp') + $(if ($NoBackground) { @() } else { $bgFiles }) + $(if ($Record) { $recFiles } else { @() })) {
         if (-not (Test-Path (Join-Path $srcCg $b))) {
             Die ((T "sdcard\cubegm\$b is missing. Download the release zip (it contains the compiled binaries) or run build.sh." `
                     "нет sdcard\cubegm\$b. Скачайте zip из раздела Releases (в нём собранные файлы) или соберите build.sh."))
@@ -51,6 +55,7 @@ $dstMode = Join-Path $cg 'usb_mode.sh'; $bakMode = Join-Path $cg 'usb_mode.sh.or
 $dstMtp  = Join-Path $cg 'usb_mtp.sh';  $bakMtp  = Join-Path $cg 'usb_mtp.sh.orig'
 $zhijack = Join-Path $cg 'zhijack.sh';  $bakZh   = Join-Path $cg 'zhijack.sh.orig-tfusbd'
 $flagOn  = Join-Path $cg 'tfusbd.on';   $flagRemote = Join-Path $cg 'tfmtp.remote'
+$flagRec = Join-Path $cg 'tfshim.on'
 if (-not (Test-Path $dstMode)) { Die ("$dstMode " + (T 'not found - this is not a TreeFrogUI card.' 'не найден - это не карта TreeFrogUI.')) }
 if (-not (Test-Path $dstMtp)) { Die (T 'cubegm\usb_mtp.sh is missing - this TreeFrogUI version has no built-in MTP mode.' 'на карте нет cubegm\usb_mtp.sh - в этой версии TreeFrogUI нет встроенного MTP-режима.') }
 $ver = Get-Content (Join-Path $cg 'version.txt') -ErrorAction SilentlyContinue
@@ -64,8 +69,11 @@ function Remove-Hook {
     if (-not (Test-Path $zhijack)) { return $false }
     $s = Read-Text $zhijack
     if (-not $s.Contains('tfusbd.on')) { return $false }
-    $n = $s.Replace($hookText + "`n", '')
-    if ($n -eq $s) { $n = $s.Replace($hookText, '') }
+    $n = $s
+    foreach ($h in @($hookText) + $oldHooks) {
+        if ($n -eq $s) { $n = $s.Replace($h + "`n", '') }
+        if ($n -eq $s) { $n = $s.Replace($h, '') }
+    }
     if ($n -eq $s) { Say (T 'zhijack.sh: the tfusbd lines were edited by hand - remove them manually.' 'zhijack.sh: строки tfusbd изменены вручную - удалите их сами.') 'Yellow'; return $false }
     Write-Text $zhijack $n
     Remove-IfExists $bakZh | Out-Null
@@ -74,7 +82,15 @@ function Remove-Hook {
 function Add-Hook {
     if (-not (Test-Path $zhijack)) { Say (T 'zhijack.sh not found - autostart not installed (start tfusbd by hand: cubegm/tfusbd.sh start).' 'zhijack.sh не найден - автозапуск не установлен (запуск вручную: cubegm/tfusbd.sh start).') 'Yellow'; return }
     $s = Read-Text $zhijack
-    if ($s.Contains('tfusbd.on')) { Say (T 'zhijack.sh: autostart already present (skipped).' 'zhijack.sh: автозапуск уже есть (пропускаю).') 'Green'; return }
+    if ($s.Contains($hookText)) { Say (T 'zhijack.sh: autostart already present (skipped).' 'zhijack.sh: автозапуск уже есть (пропускаю).') 'Green'; return }
+    foreach ($h in $oldHooks) {
+        if ($s.Contains($h)) {
+            Write-Text $zhijack $s.Replace($h, $hookText)
+            Say (T 'zhijack.sh: autostart lines updated to this version.' 'zhijack.sh: строки автозапуска обновлены до этой версии.') 'Green'
+            return
+        }
+    }
+    if ($s.Contains('tfusbd.on')) { Say (T 'zhijack.sh: the tfusbd lines were edited by hand - update them from patch\zhijack.hook manually.' 'zhijack.sh: строки tfusbd изменены вручную - обновите их по patch\zhijack.hook сами.') 'Yellow'; return }
     $anchor = "`nPICOARCH=/mnt/sdcard/cubegm/picoarch`n"
     $i = $s.IndexOf($anchor)
     if ($i -lt 0 -or $s.IndexOf($anchor, $i + 1) -ge 0) {
@@ -89,7 +105,7 @@ function Add-Hook {
 # ================= uninstall =================
 if ($Uninstall) {
     if (Remove-Hook) { Say (T 'zhijack.sh: autostart removed.' 'zhijack.sh: автозапуск удалён.') 'Green' }
-    foreach ($b in $bgFiles + @('tfusbd.on', 'tfmtp.remote')) { if (Remove-IfExists (Join-Path $cg $b)) { Say ("cubegm\$b " + (T 'removed' 'удалён')) 'Green' } }
+    foreach ($b in $bgFiles + $recFiles + @('tfusbd.on', 'tfmtp.remote', 'tfshim.on')) { if (Remove-IfExists (Join-Path $cg $b)) { Say ("cubegm\$b " + (T 'removed' 'удалён')) 'Green' } }
     foreach ($pair in @(@($dstMtp, $bakMtp, $patchedMtp, 'usb_mtp.sh'), @($dstMode, $bakMode, $patchedMode, 'usb_mode.sh'))) {
         $dst, $bak, $ph, $name = $pair
         if (Test-Path $bak) {
@@ -158,8 +174,22 @@ if ($Remote) {
     Say (T 'cubegm\tfmtp.remote removed: remote control disabled (use -Remote to enable).' 'cubegm\tfmtp.remote удалён: удалённое управление выключено (включить: -Remote).') 'Green'
 }
 
+# ---- recording layer ----
+if ($Record) {
+    if (-not $Remote) { Say (T 'Note: recording is driven from the PC through remote control; add -Remote (install_remote.bat does both).' 'Примечание: запись управляется с ПК через удалённое управление; добавьте -Remote (install_remote.bat делает и то, и другое).') 'Yellow' }
+    foreach ($b in $recFiles) { Copy-Item -LiteralPath (Join-Path $srcCg $b) -Destination (Join-Path $cg $b) -Force }
+    Touch $flagRec
+    Say (T 'cubegm\tfshim.on: recording layer enabled for picoarch games (GB350 only; delete this file to disable).' 'cubegm\tfshim.on: слой записи включён для игр picoarch (только GB350; удалите файл, чтобы выключить).') 'Green'
+    if ($NoBackground) { Say (T 'Recording needs the autostart lines in zhijack.sh, which -NoBackground removes.' 'Для записи нужны строки автозапуска в zhijack.sh, а -NoBackground их убирает.') 'Yellow' }
+} else {
+    $had = Remove-IfExists $flagRec
+    foreach ($b in $recFiles) { Remove-IfExists (Join-Path $cg $b) | Out-Null }
+    if ($had) { Say (T 'Recording layer removed (use -Record to install it).' 'Слой записи удалён (установить: -Record).') 'Green' }
+}
+
 # ---- verify ----
 $ok = ((Get-Sha (Join-Path $cg 'tfmtp')) -eq (Get-Sha (Join-Path $srcCg 'tfmtp'))) -and ((Get-Sha $dstMode) -eq $patchedMode)
+if ($Record) { foreach ($b in $recFiles) { $ok = $ok -and ((Get-Sha (Join-Path $cg $b)) -eq (Get-Sha (Join-Path $srcCg $b))) } }
 if (-not $NoBackground) { foreach ($b in $bgFiles) { $ok = $ok -and ((Get-Sha (Join-Path $cg $b)) -eq (Get-Sha (Join-Path $srcCg $b))) } }
 if (-not $ok) { Die (T 'checksums do not match after copying. Check the card and retry.' 'контрольные суммы после копирования не совпали. Проверьте карту и повторите.') }
 if ($Target -match '^[A-Za-z]:\\?$') { try { Write-VolumeCache -DriveLetter $Target.Substring(0,1) -ErrorAction Stop } catch {} }

@@ -12,3 +12,7 @@ patch/zhijack.hook text eol=lf
 sdcard/cubegm/tfmtp binary
 sdcard/cubegm/tfusbd binary
 sdcard/cubegm/tfkey binary
+*.S text eol=lf
+*.h text eol=lf
+sdcard/cubegm/*.so binary
+*.dll binary
