@@ -145,4 +145,4 @@ The builds are reproducible. CI builds the MIPS binaries and runs the self-test 
 - **`tfmtp`, `tfusbd`, `tfkey`, `tfusbd.sh`, `pc/`, `install/`, `tools/`, `build.sh`:** [MIT](LICENSE) © 2026 Pavel Kotek. See [NOTICE.md](NOTICE.md).
 - **`usb_mode.sh`, `usb_mtp.sh`** (patched and original copies) and the lines inserted into **`zhijack.sh`** belong to **TreeFrogUI** by Tomasz Zubertowski and contributors. They are redistributed with changes marked, under TreeFrogUI's license: **CC BY-NC-SA 4.0**, non-commercial use only.
 
-Not affiliated with the TreeFrogUI project. An upstream pull request with these changes: [TreeFrogUI#104](https://github.com/tzubertowski/TreeFrogUI/pull/104).
+Not affiliated with the TreeFrogUI project. Upstream pull requests with these changes: [TreeFrogUI#104](https://github.com/tzubertowski/TreeFrogUI/pull/104) (MTP fix) and [TreeFrogUI#108](https://github.com/tzubertowski/TreeFrogUI/pull/108) (background service, remote control).
