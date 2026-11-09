@@ -44,10 +44,10 @@
 
 ## 2. Что в релизе
 
-Скачайте **`treefrogui-mtp-server-v2.1.0.zip`** из [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest). В нём собранные `tfmtp`, `tfusbd` и `tfkey`. В самом репозитории бинарников нет, их собирает `build.sh`.
+Скачайте **`treefrogui-mtp-server-v2.1.1.zip`** из [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest). В нём собранные `tfmtp`, `tfusbd` и `tfkey`. В самом репозитории бинарников нет, их собирает `build.sh`.
 
 ```
-treefrogui-mtp-server-v2.1.0/
+treefrogui-mtp-server-v2.1.1/
 ├── README.md / README.ru.md      ← описание (EN / RU)
 ├── LICENSE                       ← MIT для tfmtp, tfusbd, tfkey, pc/
 ├── SHA256SUMS.txt                ← контрольные суммы всех файлов

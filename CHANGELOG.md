@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.1.1 — 2026-11-10
+
+- **tfusbd: frees RAM that picoarch leaks.** picoarch extracts zipped ROMs to `/tmp/pa-<name>` (tmpfs, i.e. RAM) and never deletes them. On a 43 MB console one or two games were enough for the next one to be killed by the OOM killer: pcsx4all died at start with an 8 MB GBA ROM still in `/tmp`. Every 10 s, while no game runs, tfusbd now deletes `/tmp/pa-*` files that no process has open or mapped, and logs what it freed.
+
 ## v2.1.0 — 2026-11-10
 
 Gameplay recording. Write-up: [docs/BACKGROUND.md §12](docs/BACKGROUND.md#12-recording-video-and-sound-v21).

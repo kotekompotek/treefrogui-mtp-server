@@ -125,6 +125,8 @@ Measured: 24 MB each way while a game was running.
 | visible stutter | one per transfer | none noticed |
 | SHA-256 | match | match |
 
+**RAM leak in picoarch (v2.1.1).** picoarch extracts zipped ROMs to `/tmp/pa-<name>`, and `/tmp` is RAM. The files stay until reboot. On this 43 MB console, after playing an 8 MB GBA game, pcsx4all (PS1) was killed by the OOM killer three seconds after start (`Out of memory: Kill process … (pcsx4all)` in `dmesg`). Every 10 s, while no game runs (only the FrogUI menu, or nothing, in picoarch), tfusbd deletes `/tmp/pa-*` files that no process has open (`/proc/*/fd`) or mapped (`/proc/*/maps`): `housekeeping: freed 1024 KB of RAM: /tmp/pa-test game.gba`.
+
 ## 7. Taking over a menu session, and the black screen
 
 If the service starts while the USB (MTP) menu item is open, it takes the session over. The first version killed `usb_mode.sh` with SIGKILL so its teardown would not run. Result: the menu started and drew frames into memory (an `fb0` snapshot showed the menu), **but the panel stayed black even after restarting the menu**, until a reboot. The hypothesis "stock `cubevol` blanks the screen while USB is connected" was tested by releasing USB for a minute: the screen stayed black, so it was wrong.
