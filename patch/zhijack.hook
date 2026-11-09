@@ -1,0 +1,4 @@
+# tfusbd: background MTP on the OTG port, automatic OTG-host/PC switching and
+# optional remote control (treefrogui-mtp-server). Opt-in: cubegm/tfusbd.on
+[ -f /mnt/sdcard/cubegm/tfusbd.on ] && [ -x /mnt/sdcard/cubegm/tfusbd.sh ] && \
+    /mnt/sdcard/cubegm/tfusbd.sh start >/dev/null 2>&1

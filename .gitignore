@@ -1,5 +1,8 @@
 # build outputs (the compiled tfmtp ships in the release zip)
 sdcard/cubegm/tfmtp
+sdcard/cubegm/tfusbd
+sdcard/cubegm/tfkey
+pc/__pycache__/
 tfmtp_test
 tfmtp_test.exe
 tfmtp_testroot/

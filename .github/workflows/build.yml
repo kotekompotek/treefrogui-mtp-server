@@ -15,12 +15,25 @@ jobs:
         with:
           version: 0.17.0
 
-      - name: Build tfmtp (MIPS) and run the protocol self-test
+      - name: Build tfmtp, tfusbd, tfkey (MIPS) and run the tfmtp protocol self-test
         run: sh ./build.sh
+
+      - name: Check console binaries are static MIPS32 little-endian ELF
+        run: |
+          for b in tfmtp tfusbd tfkey; do
+            f=sdcard/cubegm/$b
+            head -c 20 "$f" | od -An -tx1 | tr -d ' \n' | grep -q '^7f454c46010101' || { echo "$b: not ELF32 LE"; exit 1; }
+            [ "$(od -An -tu2 -j18 -N2 "$f" | tr -d ' ')" = 8 ] || { echo "$b: not MIPS"; exit 1; }
+          done
+
+      - name: Shell and Python syntax
+        run: |
+          sh -n sdcard/cubegm/tfusbd.sh && sh -n sdcard/cubegm/usb_mtp.sh && sh -n sdcard/cubegm/usb_mode.sh
+          python3 -m py_compile pc/r36.py pc/fbshot.py
 
       - name: Check shell scripts keep LF line endings
         run: |
-          for f in sdcard/cubegm/usb_mode.sh patch/usb_mode.sh.orig-v1.8.0_u patch/usb_mode.sh.patch build.sh; do
+          for f in sdcard/cubegm/*.sh patch/usb_mode.sh.orig-v1.8.0_u patch/usb_mtp.sh.orig-v1.8.0_u patch/usb_mode.sh.patch patch/zhijack.hook build.sh; do
             if grep -q $'\r' "$f"; then echo "CRLF in $f"; exit 1; fi
           done
 
@@ -34,5 +47,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tfmtp-mipsel
-          path: sdcard/cubegm/tfmtp
+          name: console-binaries-mipsel
+          path: |
+            sdcard/cubegm/tfmtp
+            sdcard/cubegm/tfusbd
+            sdcard/cubegm/tfkey

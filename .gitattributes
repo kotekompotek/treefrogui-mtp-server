@@ -4,6 +4,11 @@
 *.md text eol=lf
 *.patch text eol=lf
 patch/usb_mode.sh.orig-v1.8.0_u text eol=lf
+patch/usb_mtp.sh.orig-v1.8.0_u text eol=lf
+patch/zhijack.hook text eol=lf
+*.py text eol=lf
 *.ps1 text eol=crlf
 *.bat text eol=crlf
 sdcard/cubegm/tfmtp binary
+sdcard/cubegm/tfusbd binary
+sdcard/cubegm/tfkey binary
