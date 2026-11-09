@@ -15,7 +15,8 @@
 - **MTP that works.** The stock MTP mode never shows up in Explorer on a real SD card; `tfmtp` appears as **R36S → SD card** within a second or two.
 - **Background MTP (new in v2.0).** Plug the cable into the OTG port: the console appears on the PC in 2–4 s while the menu and games keep running. No menu item needed.
 - **The OTG port keeps working.** The `tfusbd` service switches the port between host (mouse, pad, flash drive) and device (PC) by itself.
-- **Games stay smooth.** MTP only gets CPU time the game does not need (`SCHED_IDLE`).
+- **Games stay smooth.** MTP runs at the lowest priority (nice 19), so a game keeps ~98 % of the CPU.
+- **More free RAM.** Frees ~5 MB of unswappable RAM at boot and ROM copies picoarch leaves in `/tmp`.
 - **Remote control (optional, new in v2.0).** From the PC: Linux commands as root, files, button presses, screenshots, reboot with automatic reconnect — `pc\r36.py`.
 - **Gameplay recording (optional, new in v2.1).** Video and sound of picoarch games straight to an MP4 on the PC, at the game's native resolution — `pc\r36rec.py`.
 
@@ -56,7 +57,7 @@ Also verified: Cyrillic file names, exit with **B** (menu mode), mouse on the OT
 
 **You need:** a microSD card reader, and a USB cable that carries data (not a charge-only cable).
 
-1. Download **`treefrogui-mtp-server-v2.1.1.zip`** from [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest) and unzip it.
+1. Download **`treefrogui-mtp-server-v2.1.2.zip`** from [Releases](https://github.com/kotekompotek/treefrogui-mtp-server/releases/latest) and unzip it.
 2. Turn the console off and put its SD card into the PC.
 3. **Windows:** run one of
    - `install\install.bat` — MTP fix + background MTP (recommended);

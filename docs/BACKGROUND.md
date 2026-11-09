@@ -127,6 +127,12 @@ Measured: 24 MB each way while a game was running.
 
 **RAM leak in picoarch (v2.1.1).** picoarch extracts zipped ROMs to `/tmp/pa-<name>`, and `/tmp` is RAM. The files stay until reboot. On this 43 MB console, after playing an 8 MB GBA game, pcsx4all (PS1) was killed by the OOM killer three seconds after start (`Out of memory: Kill process … (pcsx4all)` in `dmesg`). Every 10 s, while no game runs (only the FrogUI menu, or nothing, in picoarch), tfusbd deletes `/tmp/pa-*` files that no process has open (`/proc/*/fd`) or mapped (`/proc/*/maps`): `housekeeping: freed 1024 KB of RAM: /tmp/pa-test game.gba`.
 
+**Update (v2.1.2):** `SCHED_IDLE` starved `tfmtp` completely while a game used 100 % of the CPU (pico286): Windows dropped the device with timeouts (0x802A0006). `tfmtp` now runs at **nice 19**: against a game at nice 0 it gets about 1.5 % of the CPU, so the game keeps almost everything and MTP never stalls.
+
+**Unswappable RAM (v2.1.2).** The stock root filesystem is an initramfs: RAM that can never be swapped ("Unevictable" in `/proc/meminfo`). TreeFrogUI bind-mounts the SD copies over `/bin /sbin /lib /usr /etc`, so the RAM copies under them are unreachable but stay resident; `hcdemo_files` holds two "game corrupted" bitmaps only the stock boot check shows. At start tfusbd deletes both through a private non-recursive bind of `/`, which shows the initramfs without any submounts, so nothing on the SD is touched. Measured: Unevictable 14,140 → 9,200 kB, MemAvailable ~19 MB in the menu. The initramfs is unpacked from flash again at every boot.
+
+This is also why the swap file cannot rescue PPSSPP (PSP): at the moment it was OOM-killed, 28.5 MB of ~42 MB were unevictable while 124 of 128 MB of swap were free. PSP emulation needs 70-130 MB and does not fit.
+
 ## 7. Taking over a menu session, and the black screen
 
 If the service starts while the USB (MTP) menu item is open, it takes the session over. The first version killed `usb_mode.sh` with SIGKILL so its teardown would not run. Result: the menu started and drew frames into memory (an `fb0` snapshot showed the menu), **but the panel stayed black even after restarting the menu**, until a reboot. The hypothesis "stock `cubevol` blanks the screen while USB is connected" was tested by releasing USB for a minute: the screen stayed black, so it was wrong.

@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.1.2 — 2026-11-10
+
+- **tfusbd frees ~5 MB of unswappable RAM at boot.** The RAM copies of `/bin /sbin /lib /usr /etc` hidden under TreeFrogUI's SD bind mounts and the stock "game corrupted" bitmaps are deleted from the initramfs. Unevictable 14,140 → 9,200 kB; MemAvailable ~19 MB in the menu.
+- **tfmtp runs at nice 19 instead of `SCHED_IDLE`.** Under a game using 100 % of the CPU, `SCHED_IDLE` starved MTP and Windows dropped the device with timeouts.
+
 ## v2.1.1 — 2026-11-10
 
 - **tfusbd: frees RAM that picoarch leaks.** picoarch extracts zipped ROMs to `/tmp/pa-<name>` (tmpfs, i.e. RAM) and never deletes them. On a 43 MB console one or two games were enough for the next one to be killed by the OOM killer: pcsx4all died at start with an 8 MB GBA ROM still in `/tmp`. Every 10 s, while no game runs, tfusbd now deletes `/tmp/pa-*` files that no process has open or mapped, and logs what it freed.
